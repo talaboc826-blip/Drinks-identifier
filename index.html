@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AQUACOLA VISION // Coke &amp; Water Bottle AI Studio</title>
+  <meta name="description" content="Beverage container & recycling vision studio powered by Google Teachable Machine and TensorFlow.js—built for smart recycling sorting, hydration awareness, and community eco-initiatives." />
+
+  <!-- Google Fonts: Outfit (Geometric Display), Plus Jakarta Sans (Clean Body), JetBrains Mono (Telemetry) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Outfit"', 'system-ui', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            icemist: '#F4F9FC',
+            deepslate: '#0F172A',
+            colared: '#DC2626',
+            aquacyan: '#0284C7',
+            ecoemerald: '#059669',
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Subtle Ice-Water Mist, Carbonation Bubble & Chilled Glass Styling -->
+  <style>
+    body {
+      background-color: #F4F9FC;
+      background-image:
+        radial-gradient(circle at 12% 8%, rgba(2, 132, 199, 0.08) 0%, transparent 42%),
+        radial-gradient(circle at 88% 12%, rgba(220, 38, 38, 0.07) 0%, transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(5, 150, 105, 0.05) 0%, transparent 45%),
+        linear-gradient(to right, rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+    }
+
+    .chilled-glass {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    @keyframes floatBubble {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .bubble-float {
+      animation: floatBubble 4s ease-in-out infinite;
+    }
+  </style>
+
+  <!-- TensorFlow.js & Teachable Machine Image Library (jsDelivr CDNs) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</head>
+<body class="text-deepslate font-sans antialiased selection:bg-aquacyan/20 selection:text-deepslate">
+
+  <!-- =====================================================================
+       STICKY BEVERAGE & RECYCLING STUDIO HEADER
+       ===================================================================== -->
+  <header class="sticky top-0 z-40 chilled-glass border-b border-slate-900/10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-3">
+      <!-- AquaCola Vision Brand Mark -->
+      <a href="#top" class="flex items-center gap-3 group focus:outline-none">
+        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-deepslate text-white flex items-center justify-center border border-slate-800 shadow-xs group-hover:bg-aquacyan transition-colors">
+          <!-- Custom Contoured Cola Bottle & Ribbed Water Bottle Line-Art Emblem -->
+          <svg class="w-6 h-6" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <!-- Left: Contoured Cola Bottle -->
+            <path d="M7.5 3.5H10.5V5.5L11.5 8.5C12.2 10.2 12.2 11.8 11.4 13.5C10.8 15 11.8 16.8 11.8 19.5V23.5C11.8 24.1 11.3 24.5 10.7 24.5H7.3C6.7 24.5 6.2 24.1 6.2 23.5V19.5C6.2 16.8 7.2 15 6.6 13.5C5.8 11.8 5.8 10.2 6.5 8.5L7.5 5.5V3.5Z" stroke="#F87171" />
+            <!-- Right: Ribbed Water Bottle -->
+            <path d="M17.5 4.5H20.5V6.5L22 9V23.5C22 24.1 21.5 24.5 20.9 24.5H17.1C16.5 24.5 16 24.1 16 23.5V9L17.5 6.5V4.5Z" stroke="#38BDF8" />
+            <path d="M16.5 13H21.5M16.5 16.5H21.5M16.5 20H21.5" stroke="#38BDF8" stroke-opacity="0.75" />
+          </svg>
+        </div>
+        <div>
+          <span class="font-display font-extrabold text-deepslate tracking-tight text-lg sm:text-xl block leading-none">
+            AQUACOLA VISION
+          </span>
+          <span class="font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500 mt-1 block">
+            BEVERAGE &amp; PET SORTING AI
+          </span>
+        </div>
+      </a>
+
+      <!-- Studio Navigation -->
+      <nav class="hidden md:flex items-center gap-7 text-xs font-mono uppercase tracking-widest text-slate-600">
+        <a href="#scanner-hub" class="hover:text-aquacyan transition-colors">01 // Bottle Scanner</a>
+        <a href="#community-significance" class="hover:text-aquacyan transition-colors">02 // Community Impact</a>
+        <a href="#sorting-guide" class="hover:text-aquacyan transition-colors">03 // Scan Calibration</a>
+      </nav>
+
+      <!-- Live Model Telemetry Pill -->
+      <div id="model-status-pill" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-900/10 transition-all">
+        <span id="model-status-dot" class="w-2 h-2 rounded-full bg-aquacyan animate-pulse"></span>
+        <span id="model-status-text">LOADING MODEL...</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="top" class="pb-24">
+    <!-- =====================================================================
+         HERO SECTION: COKE & WATER BOTTLE VISION STUDIO
+         ===================================================================== -->
+    <section class="relative border-b border-slate-900/10 pt-10 pb-10 sm:pt-14 sm:pb-14 overflow-hidden">
+      <!-- Subtle Decorative Carbonation Bubbles -->
+      <div class="pointer-events-none absolute top-12 right-12 hidden xl:flex items-center gap-2 opacity-40" aria-hidden="true">
+        <span class="w-3 h-3 rounded-full border border-aquacyan bubble-float"></span>
+        <span class="w-2 h-2 rounded-full bg-colared/40 bubble-float" style="animation-delay: 0.8s;"></span>
+        <span class="w-4 h-4 rounded-full border border-ecoemerald bubble-float" style="animation-delay: 1.5s;"></span>
+      </div>
+
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <!-- Left Editorial & Technical Copy -->
+          <div class="lg:col-span-8 text-center lg:text-left">
+            <div class="inline-flex flex-wrap items-center justify-center lg:justify-start gap-2 px-3.5 py-1.5 rounded-full bg-white text-slate-800 font-mono text-[11px] tracking-wider uppercase mb-5 border border-slate-900/10 shadow-2xs">
+              <span class="w-2 h-2 rounded-full bg-ecoemerald"></span>
+              <span>ON-DEVICE EDGE VISION • ZERO CLOUD UPLOADS</span>
+            </div>
+
+            <h1 class="font-display text-3xl sm:text-5xl lg:text-[3.4rem] font-extrabold text-deepslate tracking-tight leading-[1.08]">
+              Smart Vision for <span class="text-colared">Coke</span> &amp; <span class="text-aquacyan">Water Bottles</span>
+            </h1>
+
+            <p class="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+              An interactive beverage container &amp; recycling vision studio powered by Google Teachable Machine and TensorFlow.js. Instantly distinguish classic cola bottles from clear water bottles using your live camera or uploaded snapshots.
+            </p>
+
+            <div class="mt-7 flex flex-wrap items-center justify-center lg:justify-start gap-3.5">
+              <a href="#scanner-hub" class="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-deepslate hover:bg-aquacyan text-white font-mono text-xs uppercase tracking-widest font-semibold shadow-xs transition-all">
+                <span>Start Bottle Inspection</span>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </a>
+              <a href="#community-significance" class="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-white hover:bg-slate-100 text-deepslate font-mono text-xs uppercase tracking-widest font-semibold border border-slate-900/15 transition-all">
+                <span>Community Significance</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Right Container Recognition Spec Card -->
+          <div class="lg:col-span-4">
+            <div class="chilled-glass rounded-3xl border border-slate-900/10 p-5 sm:p-6 shadow-xs">
+              <div class="flex items-center justify-between border-b border-slate-900/10 pb-3 mb-4">
+                <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">CONTAINER SPECTRUM</span>
+                <span class="font-mono text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-ecoemerald font-semibold border border-emerald-200">MODEL: DwUfzO1Ub</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3.5">
+                <!-- Classic Cola Bottle Tile -->
+                <div class="p-4 rounded-2xl bg-white border border-red-200/70 flex flex-col items-center text-center shadow-2xs">
+                  <!-- Custom Contoured Cola Bottle SVG -->
+                  <svg class="w-12 h-12 text-colared mb-2" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M17 4.5H23V7.5L24.8 11.5C26 14 26 16.5 24.6 19C23.6 21 25.2 23.5 25.2 28V33.5C25.2 34.6 24.3 35.5 23.2 35.5H16.8C15.7 35.5 14.8 34.6 14.8 33.5V28C14.8 23.5 16.4 21 15.4 19C14 16.5 14 14 15.2 11.5L17 7.5V4.5Z" />
+                    <path d="M16.5 7.5H23.5" />
+                    <path d="M15.4 16.5H24.6" stroke-opacity="0.65" />
+                    <path d="M15.4 20.5H24.6" stroke-opacity="0.65" />
+                    <circle cx="19" cy="26" r="1" fill="currentColor" />
+                    <circle cx="21.5" cy="29" r="0.8" fill="currentColor" />
+                  </svg>
+                  <span class="font-display font-bold text-sm text-deepslate">Cola Bottles</span>
+                  <span class="font-mono text-[10px] text-colared mt-0.5 font-medium">Contoured • Dark Liquid</span>
+                </div>
+
+                <!-- Pure Water Bottle Tile -->
+                <div class="p-4 rounded-2xl bg-white border border-sky-200/80 flex flex-col items-center text-center shadow-2xs">
+                  <!-- Custom Ribbed Clear Water Bottle SVG -->
+                  <svg class="w-12 h-12 text-aquacyan mb-2" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M17.2 5H22.8V8L25.5 11.8V33.5C25.5 34.6 24.6 35.5 23.5 35.5H16.5C15.4 35.5 14.5 34.6 14.5 33.5V11.8L17.2 8V5Z" />
+                    <path d="M16.8 8H23.2" />
+                    <path d="M15 16.5H25" stroke-opacity="0.65" />
+                    <path d="M15 21H25" stroke-opacity="0.65" />
+                    <path d="M15 25.5H25" stroke-opacity="0.65" />
+                    <path d="M20 13.5C20 13.5 22 15.8 22 17C22 18.1 21.1 19 20 19C18.9 19 18 18.1 18 17C18 15.8 20 13.5 20 13.5Z" fill="currentColor" fill-opacity="0.18" />
+                  </svg>
+                  <span class="font-display font-bold text-sm text-deepslate">Water Bottles</span>
+                  <span class="font-mono text-[10px] text-aquacyan mt-0.5 font-medium">Ribbed PET • Clear</span>
+                </div>
+              </div>
+
+              <p class="mt-3.5 font-mono text-[11px] text-slate-500 leading-relaxed">
+                Silhouette contour, label color contrast, and bottle ribbing are analyzed instantaneously in your browser.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SECTION 01: DUAL-MODE BOTTLE INSPECTION HUB
+         ===================================================================== -->
+    <section id="scanner-hub" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14">
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mb-6">
+        <div>
+          <span class="font-mono text-[11px] uppercase tracking-[0.2em] text-aquacyan font-semibold">
+            SECTION 01 // INTERACTIVE INSPECTION STUDIO
+          </span>
+          <h2 class="font-display text-2xl sm:text-4xl font-extrabold text-deepslate mt-1">
+            Dual-Mode Bottle Scanner
+          </h2>
+        </div>
+        <span class="font-mono text-xs text-slate-500">
+          Teachable Machine • Client-Side WebGL Inference
+        </span>
+      </div>
+
+      <!-- Accessible Inline Status / Error Banner (Zero alert() calls) -->
+      <div id="feedback-banner" class="hidden mb-6 p-4 rounded-2xl border flex items-start justify-between gap-3 transition-all" role="alert">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h3 id="feedback-title" class="font-mono text-xs uppercase tracking-wider font-bold">System Notice</h3>
+            <p id="feedback-message" class="text-xs sm:text-sm mt-1"></p>
+          </div>
+        </div>
+        <button type="button" onclick="hideBanner()" class="p-1.5 rounded-lg hover:bg-black/5 transition-colors cursor-pointer" aria-label="Dismiss notification">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        <!-- LEFT COLUMN (7 Cols): Live Bottle Scanner & Image Upload Test -->
+        <div class="lg:col-span-7 chilled-glass rounded-3xl border border-slate-900/10 shadow-xs overflow-hidden">
+          <!-- Mode Switcher Tabs -->
+          <div class="p-2 bg-slate-100/90 border-b border-slate-900/10 grid grid-cols-2 gap-2" role="tablist" aria-label="Bottle scanner input mode">
+            <button
+              id="tab-webcam"
+              type="button"
+              role="tab"
+              aria-selected="true"
+              aria-controls="panel-webcam"
+              onclick="switchMode('webcam')"
+              class="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-mono text-xs uppercase tracking-wider font-semibold transition-all bg-white text-deepslate shadow-2xs border border-slate-900/10 cursor-pointer"
+            >
+              <svg class="w-4 h-4 text-aquacyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <span>Live Bottle Scanner</span>
+            </button>
+
+            <button
+              id="tab-upload"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-upload"
+              onclick="switchMode('upload')"
+              class="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-mono text-xs uppercase tracking-wider font-semibold transition-all text-slate-600 hover:text-deepslate hover:bg-white/60 cursor-pointer"
+            >
+              <svg class="w-4 h-4 text-colared" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>Image Upload Test</span>
+            </button>
+          </div>
+
+          <!-- TAB PANEL 1: LIVE BOTTLE SCANNER (WEBCAM) -->
+          <div id="panel-webcam" role="tabpanel" aria-labelledby="tab-webcam" class="p-5 sm:p-6">
+            <!-- Optical Bottle Viewfinder -->
+            <div class="relative w-full aspect-square sm:aspect-4/3 max-h-[430px] mx-auto rounded-2xl bg-deepslate overflow-hidden border border-slate-900/20 flex items-center justify-center shadow-inner">
+              <!-- Live Scanning Status Pill -->
+              <div id="webcam-live-badge" class="hidden absolute top-3.5 left-3.5 z-20 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-white font-mono text-[10px] tracking-widest uppercase border border-white/15">
+                <span class="w-2 h-2 rounded-full bg-ecoemerald animate-ping"></span>
+                <span>BOTTLE SCAN // LIVE</span>
+              </div>
+
+              <!-- Camera Lens Orientation Pill -->
+              <div id="webcam-facing-badge" class="hidden absolute top-3.5 right-3.5 z-20 px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-slate-300 font-mono text-[10px] uppercase tracking-wider border border-white/15">
+                Front Lens
+              </div>
+
+              <!-- Precision Bottle-Framing Optical Reticle -->
+              <div id="webcam-reticle" class="hidden pointer-events-none absolute inset-5 z-10">
+                <span class="absolute top-0 left-0 w-7 h-7 border-t-2 border-l-2 border-aquacyan rounded-tl-md"></span>
+                <span class="absolute top-0 right-0 w-7 h-7 border-t-2 border-r-2 border-aquacyan rounded-tr-md"></span>
+                <span class="absolute bottom-0 left-0 w-7 h-7 border-b-2 border-l-2 border-colared rounded-bl-md"></span>
+                <span class="absolute bottom-0 right-0 w-7 h-7 border-b-2 border-r-2 border-colared rounded-br-md"></span>
+                <!-- Vertical Bottle Center Guide -->
+                <div class="absolute inset-y-6 left-1/2 -translate-x-1/2 w-28 border border-dashed border-white/30 rounded-2xl"></div>
+                <span class="absolute bottom-2 left-1/2 -translate-x-1/2 font-mono text-[9px] uppercase tracking-[0.2em] text-white/85 bg-slate-950/75 px-2.5 py-0.5 rounded border border-white/10 whitespace-nowrap">
+                  CENTER COKE OR WATER BOTTLE
+                </span>
+              </div>
+
+              <!-- Idle Scanner Standby Placeholder -->
+              <div id="webcam-placeholder" class="text-center px-6 py-8 max-w-sm">
+                <div class="w-16 h-16 rounded-2xl bg-slate-800/90 text-aquacyan flex items-center justify-center mx-auto mb-4 border border-slate-700">
+                  <!-- Dual Cola & Water Bottle Line-Art Icon -->
+                  <svg class="w-9 h-9" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M10.5 5H14V7.5L15.3 11.2C16.2 13.4 16.2 15.6 15.2 17.8C14.4 19.6 15.6 22 15.6 25.5V30C15.6 30.8 14.9 31.5 14.1 31.5H10.4C9.6 31.5 8.9 30.8 8.9 30V25.5C8.9 22 10.1 19.6 9.3 17.8C8.3 15.6 8.3 13.4 9.2 11.2L10.5 7.5V5Z" stroke="#F87171" />
+                    <path d="M22 6H25.5V8.5L27.5 11.8V30C27.5 30.8 26.8 31.5 26 31.5H21.5C20.7 31.5 20 30.8 20 30V11.8L22 8.5V6Z" stroke="#38BDF8" />
+                    <path d="M20.5 16.5H27M20.5 21H27M20.5 25.5H27" stroke="#38BDF8" stroke-opacity="0.7" />
+                  </svg>
+                </div>
+                <h3 class="font-display text-white font-bold text-xl">Bottle Scanner Standby</h3>
+                <p class="text-slate-400 text-xs sm:text-sm mt-2 leading-relaxed">
+                  Click <strong class="text-white">Start Camera</strong> to hold up a Coke bottle or clear water bottle for instant real-time classification.
+                </p>
+              </div>
+
+              <!-- Teachable Machine Webcam Canvas Container -->
+              <div id="webcam-canvas-container" class="hidden w-full h-full flex items-center justify-center [&>canvas]:w-full [&>canvas]:h-full [&>canvas]:object-cover"></div>
+            </div>
+
+            <!-- Webcam Action Controls -->
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex flex-wrap items-center gap-2.5 flex-1">
+                <button
+                  id="btn-toggle-webcam"
+                  type="button"
+                  onclick="toggleWebcam()"
+                  disabled
+                  class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-deepslate hover:bg-aquacyan disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-mono text-xs uppercase tracking-wider font-semibold shadow-2xs transition-all cursor-pointer"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span id="text-webcam-btn">Loading Model...</span>
+                </button>
+
+                <button
+                  id="btn-flip-camera"
+                  type="button"
+                  onclick="flipCamera()"
+                  class="hidden inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-deepslate font-mono text-xs uppercase tracking-wider font-semibold border border-slate-900/15 transition-all cursor-pointer"
+                  title="Switch between front mirror and rear scanning lens"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Flip Lens</span>
+                </button>
+              </div>
+
+              <span class="font-mono text-[11px] text-slate-500 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-ecoemerald" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Local stream • Never uploaded
+              </span>
+            </div>
+          </div>
+
+          <!-- TAB PANEL 2: IMAGE UPLOAD TEST -->
+          <div id="panel-upload" role="tabpanel" aria-labelledby="tab-upload" class="hidden p-5 sm:p-6">
+            <!-- Drag & Drop Bottle Photo Zone -->
+            <div
+              id="drop-zone"
+              tabindex="0"
+              role="button"
+              aria-label="Upload a photo of a Coke or water bottle by clicking or dragging and dropping"
+              class="relative w-full min-h-[310px] sm:min-h-[360px] rounded-2xl border-2 border-dashed border-slate-900/20 hover:border-aquacyan bg-icemist/80 hover:bg-sky-50/40 transition-all flex flex-col items-center justify-center p-6 text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-aquacyan"
+            >
+              <input
+                id="image-file-input"
+                type="file"
+                accept="image/*"
+                class="hidden"
+                onchange="handleFileSelect(event)"
+              />
+
+              <!-- Empty Uploader Prompt -->
+              <div id="upload-prompt" class="max-w-sm">
+                <div class="w-16 h-16 rounded-2xl bg-white text-colared flex items-center justify-center mx-auto mb-4 border border-slate-900/10 shadow-2xs">
+                  <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 class="font-display text-deepslate font-bold text-xl">Drop Beverage Bottle Snapshot</h3>
+                <p class="text-slate-600 text-xs sm:text-sm mt-2 leading-relaxed">
+                  Upload any photo of a Coke bottle, clear PET water bottle, or recycling bin item (JPG, PNG, WebP) to verify model predictions.
+                </p>
+                <span class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-deepslate font-mono uppercase tracking-wider font-semibold text-xs border border-slate-900/15 shadow-2xs">
+                  Browse Bottle Photo
+                </span>
+              </div>
+
+              <!-- Uploaded Image Preview Stage -->
+              <div id="upload-preview-wrapper" class="hidden w-full flex flex-col items-center">
+                <div class="relative max-h-[320px] rounded-2xl overflow-hidden shadow-xs border border-slate-900/15 bg-white p-2">
+                  <img
+                    id="uploaded-image-preview"
+                    src=""
+                    alt="Uploaded Coke or water bottle test image"
+                    class="max-h-[300px] w-auto object-contain mx-auto block rounded-xl"
+                  />
+                </div>
+                <p id="uploaded-file-name" class="mt-3 font-mono text-xs text-slate-500 truncate max-w-xs"></p>
+              </div>
+            </div>
+
+            <!-- Image Upload Action Bar -->
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onclick="document.getElementById('image-file-input').click()"
+                  class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-deepslate hover:bg-aquacyan text-white font-mono text-xs uppercase tracking-wider font-semibold shadow-2xs transition-all cursor-pointer"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span>Select File</span>
+                </button>
+
+                <button
+                  id="btn-sample-test"
+                  type="button"
+                  onclick="loadSampleBottleTest()"
+                  class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-sky-50 hover:bg-sky-100 text-aquacyan font-mono text-xs uppercase tracking-wider font-semibold border border-sky-200 transition-all cursor-pointer"
+                  title="Generate a synthetic Coke & Water bottle test card to verify inference immediately"
+                >
+                  <span>Load Sample Bottle Test</span>
+                </button>
+
+                <button
+                  id="btn-clear-upload"
+                  type="button"
+                  onclick="clearUploadedImage()"
+                  class="hidden inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-red-50 hover:bg-red-100 text-colared font-mono text-xs uppercase tracking-wider font-semibold border border-red-200 transition-all cursor-pointer"
+                >
+                  <span>Clear</span>
+                </button>
+              </div>
+
+              <span class="font-mono text-[11px] text-slate-500">Tip: Paste image (Ctrl+V)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN (5 Cols): Clear Visual Feedback & Telemetry Dashboard -->
+        <div class="lg:col-span-5 space-y-6">
+          <!-- Top Classification Card -->
+          <div id="top-prediction-card" class="chilled-glass rounded-3xl border border-slate-900/10 p-6 shadow-xs transition-all">
+            <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-900/10">
+              <span class="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                TOP CLASSIFICATION RESULT
+              </span>
+              <span id="confidence-tier-badge" class="px-2.5 py-1 rounded-full font-mono text-[10px] uppercase tracking-wider font-semibold bg-slate-100 text-slate-600 border border-slate-900/10">
+                Standby
+              </span>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between gap-4">
+              <div class="min-w-0 flex-1">
+                <h3 id="top-class-name" class="font-display text-2xl sm:text-3xl font-extrabold text-deepslate tracking-tight break-words leading-tight">
+                  Ready to Inspect
+                </h3>
+
+                <div class="mt-2.5 flex items-baseline gap-2">
+                  <span id="top-class-score" class="font-mono text-3xl sm:text-4xl font-bold text-aquacyan tabular-nums">
+                    0.0%
+                  </span>
+                  <span class="font-mono text-[11px] uppercase tracking-wider text-slate-500">confidence</span>
+                </div>
+              </div>
+
+              <!-- Animated SVG Circular Confidence Ring -->
+              <div class="relative w-16 h-16 shrink-0 flex items-center justify-center" aria-hidden="true">
+                <svg class="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="26" fill="none" stroke="#E2E8F0" stroke-width="6" />
+                  <circle
+                    id="confidence-ring-circle"
+                    cx="32"
+                    cy="32"
+                    r="26"
+                    fill="none"
+                    stroke="#0284C7"
+                    stroke-width="6"
+                    stroke-linecap="round"
+                    stroke-dasharray="163.36"
+                    stroke-dashoffset="163.36"
+                    class="transition-all duration-200 ease-out"
+                  />
+                </svg>
+                <span class="absolute font-mono text-[10px] font-bold text-slate-600">TOP-1</span>
+              </div>
+            </div>
+
+            <!-- Horizontal Confidence Progress Bar -->
+            <div class="mt-4 w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-900/5">
+              <div
+                id="top-confidence-bar"
+                class="h-full bg-aquacyan rounded-full transition-all duration-200 ease-out"
+                style="width: 0%"
+              ></div>
+            </div>
+
+            <!-- Contextual Sorting & Recognition Guidance -->
+            <div id="prediction-guidance" class="mt-4 pt-4 border-t border-slate-900/10 text-xs sm:text-sm text-slate-600 leading-relaxed">
+              Activate <strong class="text-deepslate">Live Bottle Scanner</strong> or upload a bottle photo in <strong class="text-deepslate">Image Upload Test</strong> to classify Coke and water bottles.
+            </div>
+          </div>
+
+          <!-- All-Classes Probability Breakdown Card -->
+          <div class="chilled-glass rounded-3xl border border-slate-900/10 p-6 shadow-xs">
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-900/10">
+              <div>
+                <h3 class="font-display text-lg font-bold text-deepslate">All-Classes Probability Breakdown</h3>
+                <p class="font-mono text-[11px] text-slate-500 mt-0.5">Live probability distribution across model labels</p>
+              </div>
+              <span id="total-classes-badge" class="px-2.5 py-1 rounded-xl bg-slate-100 text-deepslate font-mono text-[11px] font-semibold border border-slate-900/10">
+                -- CLASSES
+              </span>
+            </div>
+
+            <!-- Dynamically Populated Progress Bars from model.getClassLabels() -->
+            <div id="predictions-list" class="space-y-4">
+              <div class="animate-pulse space-y-3">
+                <div class="h-4 bg-slate-100 rounded w-1/3"></div>
+                <div class="h-2.5 bg-slate-100 rounded w-full"></div>
+                <div class="h-4 bg-slate-100 rounded w-1/2 mt-4"></div>
+                <div class="h-2.5 bg-slate-100 rounded w-full"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SECTION 02: COMMUNITY SIGNIFICANCE & USER CONNECTION
+         ===================================================================== -->
+    <section id="community-significance" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24">
+      <div class="bg-white rounded-3xl border border-slate-900/10 shadow-xs overflow-hidden">
+        <!-- Deep Slate Editorial Banner -->
+        <div class="bg-deepslate text-white p-8 sm:p-12 relative overflow-hidden">
+          <div class="max-w-3xl relative z-10">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-aquacyan/20 text-sky-200 font-mono text-[10px] uppercase tracking-[0.2em] border border-aquacyan/35 mb-4">
+              SECTION 02 // COMMUNITY SIGNIFICANCE &amp; REAL-WORLD IMPACT
+            </span>
+            <h2 class="font-display text-3xl sm:text-4xl lg:text-[2.6rem] font-extrabold tracking-tight leading-[1.12]">
+              Why AquaCola Vision Matters to the Community
+            </h2>
+            <p class="mt-4 text-slate-300 text-sm sm:text-base leading-relaxed">
+              Billions of soda and water bottles circulate through homes, campuses, and neighborhood sari-sari or convenience stores every week. Misplaced bottles contaminate clean recycling streams, while sugary drinks are often confused with plain hydration. By transforming a Teachable Machine model into an instant, browser-native tool, this webpage empowers everyday citizens with practical AI.
+            </p>
+          </div>
+        </div>
+
+        <!-- Direct Connection: How This Webpage's Two Tools Serve Everyday Users -->
+        <div class="p-6 sm:p-10 border-b border-slate-900/10 bg-icemist/70">
+          <div class="max-w-3xl mb-7">
+            <span class="font-mono text-[11px] uppercase tracking-[0.18em] text-ecoemerald font-semibold">
+              CONNECTED TO THIS WEBPAGE'S TOOLS
+            </span>
+            <h3 class="font-display text-2xl sm:text-3xl font-extrabold text-deepslate mt-1">
+              How Each Scanner Mode Empowers Everyday Users
+            </h3>
+            <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+              Every feature built into the Dual-Mode Bottle Scanner above directly addresses a community need—without specialized hardware or paid subscriptions.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Pillar 1: Smart Material Recovery & Recycling Sorting -> Live Bottle Scanner -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-900/10 flex flex-col justify-between shadow-2xs">
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-ecoemerald flex items-center justify-center border border-emerald-200/80">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                  <span class="font-mono text-[10px] uppercase tracking-widest text-slate-400">LIVE SCANNER</span>
+                </div>
+                <h4 class="font-display text-lg font-bold text-deepslate">
+                  Smart Material Recovery &amp; Recycling Sorting
+                </h4>
+                <p class="mt-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Households, school eco-clubs, and barangay material recovery facilities (MRFs) can use the <strong>Live Bottle Scanner</strong> on any phone or laptop to rapidly separate dark-tinted/sugary soda bottles from clear PET water bottles—reducing recycling batch contamination and increasing plastic recovery value.
+                </p>
+              </div>
+              <div class="mt-5 pt-3.5 border-t border-slate-900/10">
+                <a href="#scanner-hub" onclick="activateModeAndScroll('webcam')" class="font-mono text-xs uppercase tracking-wider font-semibold text-ecoemerald hover:text-deepslate inline-flex items-center gap-1.5 transition-colors">
+                  <span>Open Live Bottle Scanner</span>
+                  <span>→</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Pillar 2: Hydration & Nutrition Awareness -> Image Upload & Confidence Telemetry -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-900/10 flex flex-col justify-between shadow-2xs">
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-11 h-11 rounded-2xl bg-sky-50 text-aquacyan flex items-center justify-center border border-sky-200/80">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </div>
+                  <span class="font-mono text-[10px] uppercase tracking-widest text-slate-400">UPLOAD &amp; FEEDBACK</span>
+                </div>
+                <h4 class="font-display text-lg font-bold text-deepslate">
+                  Hydration &amp; Nutrition Awareness
+                </h4>
+                <p class="mt-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Students, athletes, and families can test drink snapshots in <strong>Image Upload Test</strong> or check containers live to build mindful hydration habits—helping young learners and low-vision users distinguish high-sugar sodas from pure drinking water at a glance.
+                </p>
+              </div>
+              <div class="mt-5 pt-3.5 border-t border-slate-900/10">
+                <a href="#scanner-hub" onclick="activateModeAndScroll('upload')" class="font-mono text-xs uppercase tracking-wider font-semibold text-aquacyan hover:text-deepslate inline-flex items-center gap-1.5 transition-colors">
+                  <span>Try Image Upload Test</span>
+                  <span>→</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Pillar 3: Zero-Cost, Privacy-First Browser AI -> Single-File Edge Architecture -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-900/10 flex flex-col justify-between shadow-2xs">
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-11 h-11 rounded-2xl bg-red-50 text-colared flex items-center justify-center border border-red-200/80">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <span class="font-mono text-[10px] uppercase tracking-widest text-slate-400">EDGE PRIVACY</span>
+                </div>
+                <h4 class="font-display text-lg font-bold text-deepslate">
+                  Zero-Cost, Privacy-First Browser AI
+                </h4>
+                <p class="mt-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Because TensorFlow.js runs 100% locally inside this single GitHub Pages file, webcam frames and photos never leave your device. STEM classrooms and community clean-up drives get instant, offline-capable AI with zero app installs or data collection.
+                </p>
+              </div>
+              <div class="mt-5 pt-3.5 border-t border-slate-900/10">
+                <span class="font-mono text-[11px] uppercase tracking-wider text-slate-500 inline-flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-ecoemerald"></span>
+                  <span>100% Client-Side Verified</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Community Adoption Callout Bar -->
+        <div class="p-6 sm:px-10 sm:py-6 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <p class="text-xs sm:text-sm text-slate-600 max-w-2xl">
+            <strong class="text-deepslate">Accessible Community Deployment:</strong> Built as a self-contained static webpage for GitHub Pages, any school, eco-station, or household can bookmark one URL and start sorting bottles immediately on mobile or desktop.
+          </p>
+          <a href="#scanner-hub" class="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-deepslate hover:bg-aquacyan text-white font-mono text-xs uppercase tracking-wider font-semibold transition-colors">
+            <span>Return to Scanner</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SECTION 03: OPTICAL SCAN CALIBRATION NOTES
+         ===================================================================== -->
+    <section id="sorting-guide" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+      <div class="chilled-glass border border-slate-900/10 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="max-w-2xl">
+          <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500 font-semibold">
+            SECTION 03 // SCAN CALIBRATION NOTES
+          </span>
+          <h3 class="font-display text-xl sm:text-2xl font-extrabold text-deepslate mt-1">Tips for Accurate Coke &amp; Water Bottle Detection</h3>
+          <ul class="mt-3 space-y-2 text-xs sm:text-sm text-slate-700">
+            <li class="flex items-start gap-2.5">
+              <span class="font-mono text-colared font-bold">01.</span>
+              <span><strong>Frame the Full Silhouette:</strong> Keep the bottle cap, contoured waist or PET ribbing, and label centered inside the viewfinder reticle.</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="font-mono text-aquacyan font-bold">02.</span>
+              <span><strong>Use Balanced Lighting:</strong> Clear plastic water bottles reflect bright glare; diffuse lighting helps reveal structural ribs and transparency.</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="font-mono text-ecoemerald font-bold">03.</span>
+              <span><strong>Read Confidence Tiers:</strong> Scores at <strong>80% or above</strong> confirm a Verified Bottle Match; lower scores prompt adjusting distance or angle.</span>
+            </li>
+          </ul>
+        </div>
+        <a href="#top" class="shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-deepslate hover:text-white text-deepslate font-mono text-xs uppercase tracking-wider font-semibold border border-slate-900/15 shadow-2xs transition-all">
+          <span>Back to Top</span>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <!-- =====================================================================
+       FOOTER
+       ===================================================================== -->
+  <footer class="bg-white border-t border-slate-900/10 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs text-slate-500">
+      <p>
+        AQUACOLA VISION // Powered by <strong class="text-deepslate">TensorFlow.js</strong> &amp; <strong class="text-deepslate">Google Teachable Machine</strong>
+      </p>
+      <p class="text-[11px] text-slate-400">
+        MODEL: DwUfzO1Ub • COKE &amp; WATER BOTTLE RECOGNITION
+      </p>
+    </div>
+  </footer>
+
+  <!-- =====================================================================
+       JAVASCRIPT: TEACHABLE MACHINE INTEGRATION & BOTTLE SCANNER LOGIC
+       ===================================================================== -->
+  <script>
+    /**
+     * Teachable Machine Coke & Water Bottle Model URL
+     */
+    const RAW_MODEL_URL = "https://teachablemachine.withgoogle.com/models/DwUfzO1Ub/";
+    const MODEL_BASE_URL = RAW_MODEL_URL.endsWith("/") ? RAW_MODEL_URL : RAW_MODEL_URL + "/";
+
+    // Application State
+    let model = null;
+    let totalClasses = 0;
+    let classLabels = [];
+
+    let webcam = null;
+    let isWebcamRunning = false;
+    let animationFrameId = null;
+    let useFrontCamera = true;
+    let activeMode = "webcam"; // 'webcam' | 'upload'
+
+    // Circumference for r=26 SVG circle (2 * Math.PI * 26)
+    const RING_CIRCUMFERENCE = 163.36;
+
+    /**
+     * Initialize model, drag-and-drop listeners, clipboard paste, and tab visibility handling
+     */
+    window.addEventListener("DOMContentLoaded", async () => {
+      setupDragAndDrop();
+      setupClipboardPaste();
+      setupVisibilityPause();
+      await initModel();
+    });
+
+    /**
+     * Loads model.json and metadata.json from Teachable Machine CDN
+     */
+    async function initModel() {
+      const statusPill = document.getElementById("model-status-pill");
+      const statusDot = document.getElementById("model-status-dot");
+      const statusText = document.getElementById("model-status-text");
+      const webcamBtn = document.getElementById("btn-toggle-webcam");
+      const webcamBtnText = document.getElementById("text-webcam-btn");
+
+      try {
+        const modelURL = MODEL_BASE_URL + "model.json";
+        const metadataURL = MODEL_BASE_URL + "metadata.json";
+
+        model = await tmImage.load(modelURL, metadataURL);
+        totalClasses = model.getTotalClasses();
+        classLabels = model.getClassLabels();
+
+        // Update Header Status Pill to Ready
+        statusPill.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-[11px] font-semibold bg-emerald-50 text-ecoemerald border border-emerald-200 transition-all";
+        statusDot.className = "w-2 h-2 rounded-full bg-ecoemerald";
+        statusText.textContent = `SCANNER READY // ${totalClasses} CLASSES`;
+
+        // Enable Start Camera Button
+        webcamBtn.disabled = false;
+        webcamBtnText.textContent = "Start Camera";
+
+        // Populate Initial Probability Breakdown at 0%
+        document.getElementById("total-classes-badge").textContent = `${totalClasses} ${totalClasses === 1 ? "CLASS" : "CLASSES"}`;
+        const initialPredictions = classLabels.map((label) => ({
+          className: label,
+          probability: 0
+        }));
+        renderPredictionBars(initialPredictions, false);
+
+      } catch (error) {
+        console.error("Failed to load Teachable Machine model:", error);
+
+        statusPill.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-[11px] font-semibold bg-red-50 text-colared border border-red-200 transition-all";
+        statusDot.className = "w-2 h-2 rounded-full bg-colared";
+        statusText.textContent = "MODEL OFFLINE";
+
+        webcamBtnText.textContent = "Model Unavailable";
+
+        showBanner(
+          "error",
+          "Unable to Load Teachable Machine Model",
+          "Please check your internet connection and verify that the model at https://teachablemachine.withgoogle.com/models/DwUfzO1Ub/ is publicly accessible, then refresh the page."
+        );
+      }
+    }
+
+    /**
+     * Automatically pause active webcam stream if user switches browser tabs or minimizes window
+     */
+    function setupVisibilityPause() {
+      document.addEventListener("visibilitychange", async () => {
+        if (document.hidden && isWebcamRunning) {
+          await stopWebcam();
+          showBanner(
+            "info",
+            "Live Bottle Scanner Paused",
+            "Your camera stream was automatically paused while the browser tab was hidden to protect privacy and conserve battery."
+          );
+        }
+      });
+    }
+
+    /**
+     * Helper used by Community Significance cards to switch scanner mode before smooth scroll
+     */
+    async function activateModeAndScroll(mode) {
+      await switchMode(mode);
+    }
+
+    /**
+     * Switches between 'webcam' (Live Bottle Scanner) and 'upload' (Image Upload Test)
+     */
+    async function switchMode(mode) {
+      if (activeMode === mode) return;
+      activeMode = mode;
+
+      const tabWebcam = document.getElementById("tab-webcam");
+      const tabUpload = document.getElementById("tab-upload");
+      const panelWebcam = document.getElementById("panel-webcam");
+      const panelUpload = document.getElementById("panel-upload");
+
+      const activeTabClasses = "flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-mono text-xs uppercase tracking-wider font-semibold transition-all bg-white text-deepslate shadow-2xs border border-slate-900/10 cursor-pointer";
+      const inactiveTabClasses = "flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-mono text-xs uppercase tracking-wider font-semibold transition-all text-slate-600 hover:text-deepslate hover:bg-white/60 cursor-pointer";
+
+      if (mode === "webcam") {
+        tabWebcam.className = activeTabClasses;
+        tabWebcam.setAttribute("aria-selected", "true");
+        tabUpload.className = inactiveTabClasses;
+        tabUpload.setAttribute("aria-selected", "false");
+
+        panelWebcam.classList.remove("hidden");
+        panelUpload.classList.add("hidden");
+      } else {
+        // Pause camera stream when switching to Upload mode
+        if (isWebcamRunning) {
+          await stopWebcam();
+        }
+
+        tabUpload.className = activeTabClasses;
+        tabUpload.setAttribute("aria-selected", "true");
+        tabWebcam.className = inactiveTabClasses;
+        tabWebcam.setAttribute("aria-selected", "false");
+
+        panelUpload.classList.remove("hidden");
+        panelWebcam.classList.add("hidden");
+
+        // Re-run classification if an uploaded bottle image is already present
+        const previewImg = document.getElementById("uploaded-image-preview");
+        if (previewImg && previewImg.src && !document.getElementById("upload-preview-wrapper").classList.contains("hidden")) {
+          await classifyImageElement(previewImg);
+        }
+      }
+    }
+
+    /**
+     * Toggles the webcam stream on or off
+     */
+    async function toggleWebcam() {
+      if (!model) return;
+      if (isWebcamRunning) {
+        await stopWebcam();
+      } else {
+        await startWebcam();
+      }
+    }
+
+    /**
+     * Initializes and starts the Teachable Machine webcam stream
+     */
+    async function startWebcam() {
+      const btn = document.getElementById("btn-toggle-webcam");
+      const btnText = document.getElementById("text-webcam-btn");
+      const placeholder = document.getElementById("webcam-placeholder");
+      const canvasContainer = document.getElementById("webcam-canvas-container");
+      const liveBadge = document.getElementById("webcam-live-badge");
+      const facingBadge = document.getElementById("webcam-facing-badge");
+      const reticle = document.getElementById("webcam-reticle");
+      const flipBtn = document.getElementById("btn-flip-camera");
+
+      hideBanner();
+      btn.disabled = true;
+      btnText.textContent = "Starting Camera...";
+
+      try {
+        const flip = useFrontCamera;
+        webcam = new tmImage.Webcam(400, 400, flip);
+
+        await webcam.setup({
+          facingMode: useFrontCamera ? "user" : "environment"
+        });
+        await webcam.play();
+
+        isWebcamRunning = true;
+
+        canvasContainer.innerHTML = "";
+        canvasContainer.appendChild(webcam.canvas);
+
+        placeholder.classList.add("hidden");
+        canvasContainer.classList.remove("hidden");
+        liveBadge.classList.remove("hidden");
+        facingBadge.classList.remove("hidden");
+        facingBadge.textContent = useFrontCamera ? "Front Lens" : "Rear Lens";
+        reticle.classList.remove("hidden");
+        flipBtn.classList.remove("hidden");
+
+        btn.disabled = false;
+        btn.className = "flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-colared hover:bg-red-700 text-white font-mono text-xs uppercase tracking-wider font-semibold shadow-2xs transition-all cursor-pointer";
+        btnText.textContent = "Stop Camera";
+
+        animationFrameId = window.requestAnimationFrame(webcamLoop);
+
+      } catch (err) {
+        console.error("Webcam initialization failed:", err);
+        isWebcamRunning = false;
+        btn.disabled = false;
+        btn.className = "flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-deepslate hover:bg-aquacyan text-white font-mono text-xs uppercase tracking-wider font-semibold shadow-2xs transition-all cursor-pointer";
+        btnText.textContent = "Start Camera";
+
+        showBanner(
+          "warning",
+          "Camera Access Denied or Unavailable",
+          "Please allow camera permissions in your browser settings, or switch to 'Image Upload Test' to classify Coke and water bottle photos directly."
+        );
+      }
+    }
+
+    /**
+     * Stops the webcam stream and cancels the inference loop
+     */
+    async function stopWebcam() {
+      isWebcamRunning = false;
+
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+
+      if (webcam) {
+        try {
+          await webcam.stop();
+        } catch (e) {
+          console.warn("Error stopping webcam:", e);
+        }
+        webcam = null;
+      }
+
+      const btn = document.getElementById("btn-toggle-webcam");
+      const btnText = document.getElementById("text-webcam-btn");
+      const placeholder = document.getElementById("webcam-placeholder");
+      const canvasContainer = document.getElementById("webcam-canvas-container");
+      const liveBadge = document.getElementById("webcam-live-badge");
+      const facingBadge = document.getElementById("webcam-facing-badge");
+      const reticle = document.getElementById("webcam-reticle");
+      const flipBtn = document.getElementById("btn-flip-camera");
+
+      canvasContainer.innerHTML = "";
+      canvasContainer.classList.add("hidden");
+      placeholder.classList.remove("hidden");
+      liveBadge.classList.add("hidden");
+      facingBadge.classList.add("hidden");
+      reticle.classList.add("hidden");
+      flipBtn.classList.add("hidden");
+
+      btn.disabled = false;
+      btn.className = "flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-deepslate hover:bg-aquacyan text-white font-mono text-xs uppercase tracking-wider font-semibold shadow-2xs transition-all cursor-pointer";
+      btnText.textContent = "Start Camera";
+    }
+
+    /**
+     * Flips between front ('user') and rear ('environment') camera on mobile/tablets
+     */
+    async function flipCamera() {
+      useFrontCamera = !useFrontCamera;
+      if (isWebcamRunning) {
+        await stopWebcam();
+        await startWebcam();
+      }
+    }
+
+    /**
+     * Smooth real-time inference loop for webcam frames
+     */
+    async function webcamLoop() {
+      if (!isWebcamRunning || !webcam || !model) return;
+
+      webcam.update();
+      await classifyImageElement(webcam.canvas);
+
+      if (isWebcamRunning) {
+        animationFrameId = window.requestAnimationFrame(webcamLoop);
+      }
+    }
+
+    /**
+     * Configures drag-and-drop events for the Image Upload dropzone
+     */
+    function setupDragAndDrop() {
+      const dropZone = document.getElementById("drop-zone");
+      const fileInput = document.getElementById("image-file-input");
+
+      dropZone.addEventListener("click", (e) => {
+        if (e.target.tagName !== "BUTTON") {
+          fileInput.click();
+        }
+      });
+
+      dropZone.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add("border-aquacyan", "bg-sky-50/60");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove("border-aquacyan", "bg-sky-50/60");
+        });
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        const files = e.dataTransfer?.files;
+        if (files && files.length > 0) {
+          processUploadedFile(files[0]);
+        }
+      });
+    }
+
+    /**
+     * Supports pasting images directly from clipboard (Ctrl+V / Cmd+V)
+     */
+    function setupClipboardPaste() {
+      window.addEventListener("paste", async (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        for (const item of items) {
+          if (item.type.startsWith("image/")) {
+            const file = item.getAsFile();
+            if (file) {
+              if (activeMode !== "upload") {
+                await switchMode("upload");
+              }
+              processUploadedFile(file);
+              break;
+            }
+          }
+        }
+      });
+    }
+
+    /**
+     * Handles standard file picker selection
+     */
+    function handleFileSelect(event) {
+      const file = event.target.files?.[0];
+      if (file) {
+        processUploadedFile(file);
+      }
+    }
+
+    /**
+     * Reads uploaded image file, renders preview, and runs model inference
+     */
+    function processUploadedFile(file) {
+      if (!file.type.startsWith("image/")) {
+        showBanner("warning", "Invalid File Type", "Please select a valid image file (JPG, PNG, WebP, or GIF).");
+        return;
+      }
+
+      hideBanner();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imgEl = document.getElementById("uploaded-image-preview");
+        imgEl.onload = async () => {
+          document.getElementById("upload-prompt").classList.add("hidden");
+          document.getElementById("upload-preview-wrapper").classList.remove("hidden");
+          document.getElementById("btn-clear-upload").classList.remove("hidden");
+          document.getElementById("uploaded-file-name").textContent = `FILE // ${file.name}`;
+
+          await classifyImageElement(imgEl);
+        };
+        imgEl.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    /**
+     * Generates a clean synthetic vector/canvas test card featuring contoured cola & ribbed water
+     * bottle silhouettes so users can verify model inference immediately without an external file
+     */
+    function loadSampleBottleTest() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 340;
+      canvas.height = 340;
+      const ctx = canvas.getContext("2d");
+
+      // Chilled Ice-Mist Backdrop
+      ctx.fillStyle = "#F4F9FC";
+      ctx.fillRect(0, 0, 340, 340);
+
+      // Calibration Ring
+      ctx.strokeStyle = "rgba(2, 132, 199, 0.25)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(170, 170, 132, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // LEFT: Contoured Classic Cola Bottle Silhouette
+      ctx.fillStyle = "#DC2626"; // Cola Crimson Cap
+      ctx.fillRect(92, 62, 24, 12);
+
+      // Dark Cola Glass/PET Contoured Body
+      ctx.fillStyle = "#1E1B18";
+      ctx.beginPath();
+      ctx.moveTo(94, 74);
+      ctx.lineTo(114, 74);
+      ctx.lineTo(124, 118);
+      ctx.quadraticCurveTo(132, 144, 120, 170);
+      ctx.quadraticCurveTo(114, 195, 124, 224);
+      ctx.lineTo(124, 266);
+      ctx.quadraticCurveTo(124, 276, 114, 276);
+      ctx.lineTo(94, 276);
+      ctx.quadraticCurveTo(84, 276, 84, 266);
+      ctx.lineTo(84, 224);
+      ctx.quadraticCurveTo(94, 195, 88, 170);
+      ctx.quadraticCurveTo(76, 144, 84, 118);
+      ctx.closePath();
+      ctx.fill();
+
+      // Cola Crimson Mid-Band Label
+      ctx.fillStyle = "#DC2626";
+      ctx.fillRect(86, 152, 36, 32);
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(88, 168);
+      ctx.quadraticCurveTo(104, 160, 120, 168);
+      ctx.stroke();
+
+      // RIGHT: Ribbed Clear PET Water Bottle Silhouette
+      ctx.fillStyle = "#0284C7"; // Aqua Cyan Cap
+      ctx.fillRect(218, 66, 26, 12);
+
+      // Clear Chilled Water Bottle Body
+      ctx.fillStyle = "#BAE6FD";
+      ctx.strokeStyle = "#0284C7";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(220, 78);
+      ctx.lineTo(242, 78);
+      ctx.lineTo(256, 114);
+      ctx.lineTo(256, 266);
+      ctx.quadraticCurveTo(256, 276, 246, 276);
+      ctx.lineTo(216, 276);
+      ctx.quadraticCurveTo(206, 276, 206, 266);
+      ctx.lineTo(206, 114);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Aqua Label & Horizontal Bottle Ribbing
+      ctx.fillStyle = "#0284C7";
+      ctx.fillRect(207, 154, 48, 30);
+
+      ctx.strokeStyle = "#0369A1";
+      ctx.lineWidth = 2;
+      [130, 204, 226, 248].forEach((yPos) => {
+        ctx.beginPath();
+        ctx.moveTo(210, yPos);
+        ctx.lineTo(252, yPos);
+        ctx.stroke();
+      });
+
+      const dataUrl = canvas.toDataURL("image/png");
+      const imgEl = document.getElementById("uploaded-image-preview");
+      imgEl.onload = async () => {
+        document.getElementById("upload-prompt").classList.add("hidden");
+        document.getElementById("upload-preview-wrapper").classList.remove("hidden");
+        document.getElementById("btn-clear-upload").classList.remove("hidden");
+        document.getElementById("uploaded-file-name").textContent = "SAMPLE // aquacola-bottle-test-card.png";
+        await classifyImageElement(imgEl);
+      };
+      imgEl.src = dataUrl;
+    }
+
+    /**
+     * Clears the uploaded photo and resets the telemetry dashboard
+     */
+    function clearUploadedImage() {
+      const fileInput = document.getElementById("image-file-input");
+      const imgEl = document.getElementById("uploaded-image-preview");
+
+      fileInput.value = "";
+      imgEl.src = "";
+
+      document.getElementById("upload-preview-wrapper").classList.add("hidden");
+      document.getElementById("upload-prompt").classList.remove("hidden");
+      document.getElementById("btn-clear-upload").classList.add("hidden");
+      document.getElementById("uploaded-file-name").textContent = "";
+
+      resetDashboard();
+    }
+
+    /**
+     * Runs model.predict() on any HTMLImageElement, HTMLVideoElement, or HTMLCanvasElement
+     */
+    async function classifyImageElement(element) {
+      if (!model) return;
+
+      try {
+        const predictions = await model.predict(element);
+        const sorted = [...predictions].sort((a, b) => b.probability - a.probability);
+        updateDashboard(sorted);
+      } catch (err) {
+        console.error("Prediction error:", err);
+      }
+    }
+
+    /**
+     * Updates the Top Classification Card, animated SVG ring, and All-Classes Breakdown
+     */
+    function updateDashboard(sortedPredictions) {
+      if (!sortedPredictions || sortedPredictions.length === 0) return;
+
+      const top = sortedPredictions[0];
+      const clampedProb = Math.max(0, Math.min(1, top.probability));
+      const pct = (clampedProb * 100).toFixed(1);
+
+      const topNameEl = document.getElementById("top-class-name");
+      const topScoreEl = document.getElementById("top-class-score");
+      const topBarEl = document.getElementById("top-confidence-bar");
+      const ringEl = document.getElementById("confidence-ring-circle");
+      const badgeEl = document.getElementById("confidence-tier-badge");
+      const guidanceEl = document.getElementById("prediction-guidance");
+
+      topNameEl.textContent = top.className;
+      topScoreEl.textContent = `${pct}%`;
+      topBarEl.style.width = `${clampedProb * 100}%`;
+
+      // Update Circular SVG Progress Ring
+      const dashOffset = RING_CIRCUMFERENCE * (1 - clampedProb);
+      ringEl.style.strokeDashoffset = dashOffset.toFixed(2);
+
+      // Apply Confidence Tiers:
+      // >= 80%: Verified Bottle Match (Eco Emerald #059669)
+      // 50% - 79%: Probable Container (Pure Aqua Cyan #0284C7)
+      // < 50%: Unclear / Reposition Bottle (Cola Crimson / Slate)
+      if (clampedProb >= 0.8) {
+        badgeEl.className = "px-2.5 py-1 rounded-full font-mono text-[10px] uppercase tracking-wider font-semibold bg-emerald-50 text-ecoemerald border border-emerald-200";
+        badgeEl.textContent = "Verified Bottle Match";
+        topScoreEl.className = "font-mono text-3xl sm:text-4xl font-bold text-ecoemerald tabular-nums";
+        topBarEl.className = "h-full bg-ecoemerald rounded-full transition-all duration-200 ease-out";
+        ringEl.setAttribute("stroke", "#059669");
+        guidanceEl.innerHTML = `High-certainty sorting match for <strong class="text-deepslate">${escapeHtml(top.className)}</strong>. Bottle silhouette and label contrast align strongly with this category.`;
+      } else if (clampedProb >= 0.5) {
+        badgeEl.className = "px-2.5 py-1 rounded-full font-mono text-[10px] uppercase tracking-wider font-semibold bg-sky-50 text-aquacyan border border-sky-200";
+        badgeEl.textContent = "Probable Container";
+        topScoreEl.className = "font-mono text-3xl sm:text-4xl font-bold text-aquacyan tabular-nums";
+        topBarEl.className = "h-full bg-aquacyan rounded-full transition-all duration-200 ease-out";
+        ringEl.setAttribute("stroke", "#0284C7");
+        guidanceEl.innerHTML = `Probable match for <strong class="text-deepslate">${escapeHtml(top.className)}</strong>. Center the bottle upright and reduce plastic glare to confirm.`;
+      } else {
+        badgeEl.className = "px-2.5 py-1 rounded-full font-mono text-[10px] uppercase tracking-wider font-semibold bg-red-50 text-colared border border-red-200";
+        badgeEl.textContent = "Unclear / Reposition Bottle";
+        topScoreEl.className = "font-mono text-3xl sm:text-4xl font-bold text-slate-600 tabular-nums";
+        topBarEl.className = "h-full bg-slate-400 rounded-full transition-all duration-200 ease-out";
+        ringEl.setAttribute("stroke", "#64748B");
+        guidanceEl.textContent = "Unclear reading. Hold the Coke or water bottle upright inside the viewfinder frame with clearer lighting.";
+      }
+
+      renderPredictionBars(sortedPredictions, true);
+    }
+
+    /**
+     * Renders horizontal probability progress bars for every class in the model
+     */
+    function renderPredictionBars(predictions, hasActiveResult) {
+      const container = document.getElementById("predictions-list");
+
+      container.innerHTML = predictions
+        .map((item, idx) => {
+          const clamped = Math.max(0, Math.min(1, item.probability));
+          const percent = (clamped * 100).toFixed(1);
+          const isTop = hasActiveResult && idx === 0 && clamped > 0.05;
+
+          const barColor = isTop
+            ? clamped >= 0.8
+              ? "bg-ecoemerald"
+              : clamped >= 0.5
+              ? "bg-aquacyan"
+              : "bg-slate-500"
+            : "bg-slate-300";
+
+          const labelStyle = isTop ? "font-bold text-deepslate" : "font-medium text-slate-700";
+          const pctStyle = isTop ? "font-semibold text-deepslate" : "font-normal text-slate-500";
+
+          return `
+            <div>
+              <div class="flex items-center justify-between text-xs sm:text-sm mb-1.5 gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="font-mono text-[10px] text-slate-400">0${idx + 1}</span>
+                  <span class="${labelStyle} truncate">${escapeHtml(item.className)}</span>
+                </div>
+                <span class="font-mono text-xs ${pctStyle} tabular-nums shrink-0">${percent}%</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  class="h-full ${barColor} rounded-full transition-all duration-150 ease-out"
+                  style="width: ${clamped * 100}%"
+                ></div>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    /**
+     * Resets the prediction dashboard back to idle standby state
+     */
+    function resetDashboard() {
+      document.getElementById("top-class-name").textContent = "Ready to Inspect";
+      document.getElementById("top-class-score").textContent = "0.0%";
+      document.getElementById("top-class-score").className = "font-mono text-3xl sm:text-4xl font-bold text-aquacyan tabular-nums";
+      document.getElementById("top-confidence-bar").style.width = "0%";
+      document.getElementById("top-confidence-bar").className = "h-full bg-aquacyan rounded-full transition-all duration-200 ease-out";
+
+      const ringEl = document.getElementById("confidence-ring-circle");
+      ringEl.style.strokeDashoffset = RING_CIRCUMFERENCE.toFixed(2);
+      ringEl.setAttribute("stroke", "#0284C7");
+
+      const badgeEl = document.getElementById("confidence-tier-badge");
+      badgeEl.className = "px-2.5 py-1 rounded-full font-mono text-[10px] uppercase tracking-wider font-semibold bg-slate-100 text-slate-600 border border-slate-900/10";
+      badgeEl.textContent = "Standby";
+
+      document.getElementById("prediction-guidance").innerHTML =
+        'Activate <strong class="text-deepslate">Live Bottle Scanner</strong> or upload a bottle photo in <strong class="text-deepslate">Image Upload Test</strong> to classify Coke and water bottles.';
+
+      if (classLabels.length > 0) {
+        renderPredictionBars(
+          classLabels.map((label) => ({ className: label, probability: 0 })),
+          false
+        );
+      }
+    }
+
+    /**
+     * Displays an accessible inline alert banner (never uses alert())
+     */
+    function showBanner(type, title, message) {
+      const banner = document.getElementById("feedback-banner");
+      const titleEl = document.getElementById("feedback-title");
+      const msgEl = document.getElementById("feedback-message");
+
+      const styles = {
+        error: "mb-6 p-4 rounded-2xl border bg-red-50 border-red-200 text-red-950 flex items-start justify-between gap-3",
+        warning: "mb-6 p-4 rounded-2xl border bg-amber-50/90 border-amber-300/80 text-amber-950 flex items-start justify-between gap-3",
+        info: "mb-6 p-4 rounded-2xl border bg-sky-50/90 border-sky-200 text-deepslate flex items-start justify-between gap-3"
+      };
+
+      banner.className = styles[type] || styles.info;
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      banner.classList.remove("hidden");
+    }
+
+    function hideBanner() {
+      document.getElementById("feedback-banner").classList.add("hidden");
+    }
+
+    /**
+     * Escapes HTML strings to safely render model class labels
+     */
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
